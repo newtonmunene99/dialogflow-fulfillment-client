@@ -67,6 +67,7 @@ export default class WebhookClient {
       ?.fulfillmentMessages as google.cloud.dialogflow.v2.Intent.IMessage[]
     this.webhookResponseBody.outputContexts = this.webhookRequestBody.queryResult
       ?.outputContexts as google.cloud.dialogflow.v2.IContext[]
+    this.webhookResponseBody.sessionEntityTypes = []
   }
 
   public get responseId(): string {
@@ -150,11 +151,37 @@ export default class WebhookClient {
     }
   }
 
+  /**
+   *  Calling this will add to any existing session entity types so you can call it more than once to add more entity types
+   *
+   *  @example
+   * ```ts
+   *  ...
+   *  agent.attachSessionEntityType({
+   *    name: this.session + '/entityTypes/MyCustomEntity',
+   *    entities: [{ value: 'car', synonyms: ['car','vehicle','automobile'] }],
+   *    entityOverrideMode: 'ENTITY_OVERRIDE_MODE_OVERRIDE'
+   *  })
+   *  ...
+   *  agent.handleRequest(...);
+   * ```
+   *
+   * @param {google.cloud.dialogflow.v2.ISessionEntityType} entity
+   * @memberof WebhookClient
+   */
+  public attachSessionEntityType(entity: google.cloud.dialogflow.v2.ISessionEntityType) {
+    this.webhookResponseBody.sessionEntityTypes.push(entity)
+  }
+
+  public clearSessionEntityType() {
+    this.webhookResponseBody.sessionEntityTypes = []
+    return
+  }
+
   public clearContexts() {
     this.webhookResponseBody.outputContexts = []
     return
   }
-
   /**
    * Takes in a `Record` where `key` is your intent name and `value` is a function that takes in a parameter of type `WebhookClient`.
    *
@@ -178,10 +205,10 @@ export default class WebhookClient {
    *    "BookTicketIntent":handleBookIntent,
    *  });
    *
-   * async function handleBookIntent(agent){
-   *  await someAsyncTask();
-   *  agent.add("Ticket Booked");
-   * }
+   *  async function handleBookIntent(agent){
+   *    await someAsyncTask();
+   *    agent.add("Ticket Booked");
+   *  }
    * ```
    * @param {Record<string, (agent: WebhookClient) => any>} intentMap
    * @memberof WebhookClient
